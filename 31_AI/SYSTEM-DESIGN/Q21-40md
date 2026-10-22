@@ -1,0 +1,1055 @@
+# Google Cloud AI Engineer — System Design Answers Q21–40
+
+This section covers distributed systems and core system design, which are especially important for demonstrating strong software engineering fundamentals in your Google interview.
+
+For each question, focus on four things: the architecture, the request/data flow, the critical design decisions, and how the system behaves under failure or heavy traffic.
+
+# Q21. Design a URL Shortening Service
+
+## 1. Problem statement
+
+Design a service like Bitly that converts a long URL into a short URL and redirects users when they visit it.
+
+Functional requirements:
+
+- Create a short URL for a long URL.
+- Redirect users to the original URL.
+- Optionally support expiration, custom aliases, and analytics.
+
+Non-functional requirements:
+
+- Low redirect latency.
+- High availability.
+- Unique short codes.
+- Support high read traffic.
+
+## 2. Architecture
+
+Client → Load balancer → API gateway
+
+Create URL
+
+Code generator
+
+Redirect
+
+Cache lookup
+
+Database: short code → original URL
+
+## 3. How it works
+
+URL creation
+
+1. Validate the destination URL and enforce abuse protections.
+2. Generate a unique short code.
+3. Store the mapping in a database.
+4. Return the short URL.
+
+Redirection
+
+1. Extract the short code from the incoming request.
+2. Look up the mapping in the cache.
+3. If there is a cache miss, query the database.
+4. Return an HTTP redirect to the destination.
+
+Use a `301` redirect when permanent caching is desirable, or `302` when redirects should remain more easily changeable and request analytics or destination updates matter. Browser and intermediary caching behavior must be considered.
+
+## 4. How do you generate unique IDs?
+
+Options include:
+
+- Database sequence: Simple, but can become a coordination bottleneck.
+- Distributed ID generator: Generates IDs across multiple servers.
+- Random codes: Require collision detection and retry.
+- Hash of the original URL: Can cause collisions and does not naturally support multiple short links for the same destination.
+
+A common approach is to generate a unique numeric ID and encode it in Base62 using digits, lowercase letters, and uppercase letters. The code length grows as the ID space grows.
+
+## 5. Scaling and reliability
+
+- Cache frequently accessed mappings.
+- Partition the database by short code.
+- Replicate data for high availability.
+- Protect against malicious URLs and redirect abuse.
+- Record analytics asynchronously so redirect latency stays low.
+- Avoid cache stampedes for popular links.
+
+### Interview-ready answer
+
+“I would build a URL creation API and a highly optimized redirect path. The creation service generates a unique ID, encodes it as a short code, and persists the mapping. The redirect service first checks a distributed cache and falls back to the database. Since redirects are read-heavy, caching is critical. I would partition and replicate the mapping store, validate destinations, and process analytics asynchronously to keep redirects fast.”
+
+# Q22. Design a Highly Scalable API Gateway
+
+## 1. Problem statement
+
+Design a common entry point for multiple backend services that handles routing, authentication, rate limiting, request validation, and observability.
+
+## 2. Architecture
+
+Clients
+
+Load balancer + API gateway cluster
+
+User service
+
+Order service
+
+AI service
+
+Shared policies: identity, routing, quotas, timeouts, logs
+
+## 3. Responsibilities
+
+The gateway should:
+
+- Validate credentials or tokens.
+- Apply rate limits and request-size limits.
+- Route requests using paths, hosts, or other rules.
+- Enforce timeouts and selected retry policies.
+- Propagate request IDs and tracing context.
+- Terminate TLS where appropriate.
+
+Business logic should remain in backend services. A gateway should not become a giant application that contains all business rules.
+
+## 4. Scaling
+
+Deploy multiple gateway instances behind a load balancer. Keep request handling stateless wherever possible.
+
+For distributed rate limiting, use a centralized or distributed quota mechanism depending on how strict the limit must be. Local in-memory counters are fast but cannot enforce an exact global quota across replicas without coordination.
+
+## 5. Failure handling
+
+A gateway must fail closed for security-critical checks when authorization cannot be established. For noncritical dependencies, carefully designed fallbacks may be appropriate.
+
+Retries must be bounded and should not automatically replay non-idempotent operations.
+
+### Interview-ready answer
+
+“I would deploy a horizontally scalable, stateless gateway behind a load balancer. It would handle authentication, routing, quotas, request validation, timeout policies, and tracing, while leaving business logic to downstream services. I would enforce bounded retries and use a shared quota mechanism where global limits matter. I would monitor gateway latency, upstream errors, rate-limit rejections, and saturation.”
+
+# Q23. Design a Distributed Rate Limiter
+
+## 1. Problem statement
+
+Limit how many requests a user, tenant, or IP address can make within a given period, even when the application runs on multiple servers.
+
+For example, a tenant might be allowed 100 requests per minute.
+
+## 2. Common algorithms
+
+[System Design: What’s a Token Bucket? | by Mehmet Basrioglu | Medium](https://images.openai.com/static-rsc-4/l35blDvmnn0-rD0AT9XmtPoWHIAh-WdJW1NNjUfxj_kCmufH01FD_l-M9nwc0b_LcHeNoAkaVw_mLOjn5v2ymVg552j6zGZ5023gZlpF0BEk6z85wsh6bvOBctyskkgKuHcxMQPHOO2dOe8RF4Kr_Qhg6mlCKOewIU9J263ahLI?purpose=inline)
+
+Token bucket
+
+Tokens refill at a fixed rate. Each request consumes tokens. Supports controlled bursts while limiting long-term traffic.
+
+[A Guide to Rate Limiting Strategies - ByteByteGo Newsletter](https://images.openai.com/static-rsc-4/vYim6K3_T5CMpKO2xgm33_qVOVptQEvmadN3eWXWUVKZ5QUZbBvI5nfGOcV4sdGdIMnUeQD1ArfgkdkuBcx_yqw2znj6OWdcDRrlDaEZTzb0ZM6Ehx9uVc9_qAKCqywiKjUqCgzi71RjixRXS_e3-yX8_yHKCxeeCS-mOAKtbhY?purpose=inline)
+
+Leaky bucket
+
+Processes traffic at a controlled rate. Useful for smoothing bursts, depending on whether requests are queued or excess traffic is rejected.
+
+[Top Five Rate Limiting Algorithms \~ Key Concepts in System Design | by Kajol Kumari | Feb, 2026 | Medium](https://images.openai.com/static-rsc-4/6YQmIZ50VTq9vtZwboQC8_3R4bL-g8k1aOYUASyXbkr7S2ilGJ2ylZ3cPh3ThKsX8oaT2zColWr0XSLwjQchL40itghPby71sXXJl0mj0M2WnRzMgUMC5NZsszTX2pvs01OI1SwIo9xIpUdxyfFM0gLljUx6Y8UdMrqA5Hg7eDw?purpose=inline)
+
+Sliding window
+
+Tracks activity over a rolling time interval. Offers a more precise rolling-window limit but can require more state or computation.
+
+## 3. Architecture
+
+Incoming request
+
+Gateway identifies user / tenant
+
+Atomic quota check and update
+
+Allowed
+
+Forward request
+
+Limited
+
+HTTP 429
+
+## 4. Distributed implementation
+
+A shared store such as Redis can maintain counters or token-bucket state. Use atomic operations, such as a Lua script or an equivalent atomic primitive, to prevent concurrent requests from overspending the same quota.
+
+Important considerations:
+
+- Key state by tenant, endpoint, or other policy dimension.
+- Set appropriate expiration times.
+- Avoid one extremely hot global counter.
+- Consider local token allocation to reduce coordination, with bounded quota overshoot.
+- Define behavior if the quota store becomes unavailable.
+
+For an AI API, rate-limit requests, tokens, and concurrent generations separately.
+
+### Interview-ready answer
+
+“I would use token bucket for a general-purpose rate limiter because it permits controlled bursts while enforcing a sustained rate. The gateway would identify the tenant and atomically check and update quota state in a distributed store. I would use separate limits for request rate, token consumption, and concurrency where needed. I would also define a fail-open or fail-closed policy based on the security and cost implications, and monitor rejections, quota-store latency, and hot keys.”
+
+# Q24. Design a Notification Delivery Platform
+
+## 1. Problem statement
+
+Build a service that sends notifications through email, SMS, push notifications, or in-app messages at scale.
+
+Requirements:
+
+- Support immediate and scheduled notifications.
+- Retry transient delivery failures.
+- Avoid duplicate notifications where possible.
+- Track delivery status.
+- Support user preferences and priorities.
+
+## 2. Architecture
+
+Application → notification API
+
+Validation + preference and priority checks
+
+Durable queue / event stream
+
+Email
+
+SMS
+
+Push
+
+Provider callbacks → delivery status store
+
+## 3. Processing flow
+
+1. An application submits a notification request with a unique notification ID.
+2. The API validates the recipient, channel, template, and priority.
+3. The notification is durably recorded and queued.
+4. Workers select the appropriate provider and send the message.
+5. Transient failures are retried with exponential backoff and jitter.
+6. Permanent failures are marked failed; exhausted retries go to a dead-letter queue.
+7. Provider callbacks update delivery status.
+
+Use separate queues or priority classes for urgent transactional notifications and bulk marketing messages so that one workload cannot starve the other.
+
+## 4. Delivery guarantees and duplicates
+
+A queue may deliver the same event more than once. A worker can also crash after sending a message but before saving its status.
+
+Therefore, true end-to-end exactly-once delivery is generally not guaranteed unless the downstream provider supports suitable idempotency semantics.
+
+Use stable notification IDs, deduplication records, and provider idempotency keys where supported. Track statuses such as `QUEUED`, `SENDING`, `SENT`, `DELIVERED`, and `FAILED` without assuming that provider acceptance means final delivery.
+
+### Interview-ready answer
+
+“I would persist notification requests and process them asynchronously through a durable queue. Channel-specific workers would integrate with email, SMS, and push providers, with retries, dead-letter handling, and provider callbacks. I would isolate high-priority traffic, enforce user preferences, and track delivery status. Since duplicate delivery is possible after ambiguous failures, I would use idempotency and deduplication wherever supported, while acknowledging that provider-level exactly-once delivery cannot always be guaranteed.”
+
+# Q25. Design a Distributed Message Queue
+
+## 1. Problem statement
+
+Build a durable messaging system that allows producers to publish events and consumers to process them independently.
+
+The system should support high throughput, horizontal scaling, message durability, and recovery after failures.
+
+## 2. Architecture
+
+Producers
+
+Broker cluster → partitioned durable logs
+
+Partition 0
+
+Partition 1
+
+Partition 2
+
+Consumer groups → independent processing
+
+## 3. Core concepts
+
+Partitions: Split a topic into independently processed segments to increase parallelism.
+
+Ordering: Messages are typically ordered within a partition, not across the entire topic. Choose a partition key that keeps related events together when ordering matters.
+
+Consumer groups: Consumers within a group divide the partitions among themselves. Separate groups can independently consume the same events.
+
+Offsets: Consumers track their progress through the log. Committing an offset too early risks losing work; committing too late can cause repeated processing.
+
+Replication: Store replicas across different brokers or failure domains to improve durability and availability.
+
+## 4. Delivery semantics
+
+- At-most-once: Messages may be lost, but are not intentionally redelivered.
+- At-least-once: Messages are retried, so duplicates are possible.
+- Effectively-once processing: Combine replayable messages with idempotent operations or transactional mechanisms so repeated delivery does not repeat the business effect.
+
+“Exactly once” must be defined carefully: a broker's processing guarantee does not automatically make arbitrary external database or API side effects exactly once.
+
+## 5. Handling failures
+
+If a consumer crashes, another consumer can take over its partitions and resume from committed offsets. If a broker fails, replicas may take over depending on the replication and acknowledgment configuration.
+
+Monitor consumer lag, partition skew, disk utilization, replication health, and publish latency.
+
+### Interview-ready answer
+
+“I would build a partitioned, replicated durable log. Producers publish to topics, consumers process partitions through consumer groups, and offsets track progress. Partitioning provides throughput and ordering within a partition, while replication protects against broker failures. I would select delivery semantics based on business requirements, make consumers idempotent, and monitor consumer lag, replication health, and hot partitions.”
+
+# Q26. Design a Real-Time Event Streaming Platform
+
+## 1. Problem statement
+
+Build a platform that ingests continuous events from many producers, processes them in near real time, and sends derived results to downstream applications.
+
+Examples include vehicle telemetry, clickstream analytics, fraud detection, and application monitoring.
+
+## 2. Architecture
+
+Producers: applications, devices, services
+
+Kafka / Pub/Sub ingestion layer
+
+Stream processing: filter, aggregate, enrich
+
+Database
+
+Analytics
+
+Alerts
+
+## 3. How streaming works
+
+1. Producers publish timestamped events.
+2. The broker partitions and durably stores them.
+3. Stream processors consume events and perform transformations.
+4. Stateful operations use windows, keyed state, and checkpoints.
+5. Results are written to downstream sinks or emitted as new events.
+
+For example, a vehicle telemetry pipeline might calculate the average engine temperature per vehicle over a rolling 30-second window and alert when the value crosses a threshold.
+
+## 4. Handling event time and late data
+
+Processing time is when the system handles an event; event time is when the event actually occurred.
+
+If a device is temporarily offline, its data may arrive late. Event-time windows and watermarks allow the system to handle a bounded amount of late data. Very late events may require correction or a separate reconciliation path.
+
+## 5. Scaling
+
+- Increase partition count when the workload and ordering requirements allow it.
+- Scale stream-processing workers according to throughput and lag.
+- Use batching and compression.
+- Avoid expensive synchronous calls in the hot path.
+- Monitor skew caused by a small number of very active partition keys.
+
+### Interview-ready answer
+
+“I would separate ingestion from processing using a durable event stream. Producers publish timestamped events, and horizontally scalable stream processors perform filtering, enrichment, and windowed aggregation before writing to downstream sinks. I would use event-time processing for late data, checkpoint state, and select partition keys based on parallelism and ordering needs. Consumer lag, processing latency, throughput, and partition skew would guide scaling.”
+
+# Q27. Design a Distributed Task Scheduler
+
+## 1. Problem statement
+
+Build a service that schedules one-time, delayed, and recurring tasks across multiple worker nodes.
+
+Examples include scheduled reports, cleanup jobs, model retraining, and recurring AI workflows.
+
+## 2. Architecture
+
+Scheduler API → persistent task store
+
+Due-task detection / scheduler replicas
+
+Durable execution queue
+
+Worker pool → task execution → status update
+
+## 3. Scheduling design
+
+A task record includes:
+
+- Task ID and schedule.
+- Next execution time.
+- Current status.
+- Retry policy and deadline.
+- Execution ID and idempotency key.
+- Lease owner and lease expiry, if claimed.
+
+For a large number of scheduled tasks, maintain an indexed next-execution time or use time buckets to avoid scanning every task continuously.
+
+When a task becomes due, a scheduler claims it atomically and publishes it for execution.
+
+## 4. Avoiding duplicate execution
+
+Multiple schedulers may discover the same due task. Use atomic state transitions, leases, or database transactions to ensure only one valid claim is made at a time.
+
+However, a lease can expire while the original worker is still running. Fencing tokens, execution IDs, and idempotent effects help prevent stale workers from committing conflicting results.
+
+For recurring jobs, define whether the schedule follows fixed-rate timing, fixed-delay timing, or a calendar expression. Also define what happens to missed runs after downtime.
+
+### Interview-ready answer
+
+“I would store schedules durably and have scheduler replicas claim due tasks atomically. Claimed tasks would enter a durable execution queue, and workers would update execution status using unique execution IDs. Leases and fencing tokens would protect against stale workers, while idempotency would prevent repeated business effects. I would partition the schedule index for scale and explicitly define missed-run, retry, and recurring-task semantics.”
+
+# Q28. Design a Background Job Processing System
+
+## 1. Problem statement
+
+Design a system for long-running work that should not block an HTTP request, such as generating reports, processing files, or running AI inference in batches.
+
+## 2. Architecture
+
+Client submits job → API returns job ID
+
+Job metadata database + durable queue
+
+Worker pool processes jobs
+
+Result storage + status endpoint / notification
+
+## 3. Lifecycle
+
+A typical job follows:
+
+`QUEUED → RUNNING → SUCCEEDED / FAILED`
+
+Additional states may include `RETRYING`, `CANCEL_REQUESTED`, and `CANCELLED`.
+
+The API can expose:
+
+- `POST /jobs` to submit a job.
+- `GET /jobs/{id}` to check status.
+- `POST /jobs/{id}/cancel` to request cancellation.
+- A result endpoint or callback for completed work.
+
+## 4. Retries and dead-letter queues
+
+Retry transient failures, such as temporary network errors. Do not retry permanent validation failures indefinitely.
+
+Use exponential backoff with jitter, cap the number of attempts, and move exhausted jobs to a dead-letter queue.
+
+Persist enough state to recover from worker crashes. For multi-step jobs, save checkpoints after meaningful steps rather than restarting the whole process.
+
+## 5. Capacity management
+
+Bound the queue and worker concurrency. If incoming jobs exceed processing capacity, apply admission control, quotas, or backpressure rather than allowing an unbounded backlog.
+
+Separate workloads with different resource requirements—for example, CPU report generation and GPU model inference.
+
+### Interview-ready answer
+
+“I would accept jobs through an API, persist their metadata, enqueue execution, and return a job ID immediately. Workers would process jobs asynchronously and update a durable state machine. I would use idempotency keys, bounded retries, dead-letter handling, cancellation support, and checkpoints for long-running jobs. Queue depth, oldest-job age, processing duration, and worker saturation would drive autoscaling and backpressure.”
+
+# Q29. Design a Distributed Caching System
+
+## 1. Problem statement
+
+Design a caching layer that reduces database load and response latency for frequently accessed data.
+
+The system should support many application instances, high read throughput, and predictable behavior when cached values become stale.
+
+## 2. Architecture
+
+Application services
+
+Distributed cache cluster
+
+Cache hit
+
+Return cached data
+
+Cache miss
+
+Read database
+
+Cache misses populate the cache after a successful database read.
+
+## 3. Cache-aside pattern
+
+The application first reads from the cache. If the value is absent, it queries the database and then caches the result.
+
+On a write, the application updates the database and invalidates the corresponding cache key. This is usually safer than allowing the cache to become an independent source of truth.
+
+## 4. Common caching problems
+
+Cache stampede: Many requests simultaneously miss the same key and overwhelm the database. Use request coalescing, single-flight loading, TTL jitter, or carefully controlled refreshes.
+
+Hot keys: A popular item overloads one cache node. Replication, local caching, or splitting traffic across equivalent keys may help.
+
+Stale data: TTLs limit how long values remain cached, but they do not guarantee immediate consistency. Explicit invalidation or versioned keys may be needed.
+
+Cache penetration: Repeated requests for nonexistent keys hit the database. Short-lived negative caching or Bloom filters can help, depending on the workload.
+
+Eviction: LRU, LFU, and TTL-based policies serve different workloads. Choose according to access patterns and memory constraints.
+
+### Interview-ready answer
+
+“I would use a distributed cache with a cache-aside strategy for frequently read data. The database remains the source of truth, and writes invalidate or version the relevant cache entries. I would mitigate stampedes using request coalescing and TTL jitter, handle hot keys through replication or local caching, and use an appropriate eviction policy. I would monitor hit rate, cache latency, eviction rate, stale reads, and database load.”
+
+# Q30. Design a Globally Distributed Key-Value Store
+
+## 1. Problem statement
+
+Design a key-value database that supports very high read/write throughput across multiple nodes and possibly multiple geographic regions.
+
+Requirements include durability, availability, partitioning, and a clearly defined consistency model.
+
+## 2. Architecture
+
+Client → routing / partition map
+
+Consistent hashing or range-based partitioning
+
+Shard A
+
+Replicas
+
+Shard B
+
+Replicas
+
+Shard C
+
+Replicas
+
+Replication and consistency protocols coordinate reads and writes.
+
+## 3. Partitioning
+
+Consistent hashing: Maps keys onto a hash ring. Adding or removing nodes typically moves only a portion of keys, especially when virtual nodes are used.
+
+Range partitioning: Assigns contiguous key ranges to partitions. This supports range queries efficiently but can create hotspots if keys or access patterns are skewed.
+
+The choice depends on whether the workload is primarily key-based lookup or range scanning.
+
+## 4. Replication and consistency
+
+Each partition may have multiple replicas. A write can be acknowledged after one replica, a quorum, or another configured durability condition.
+
+Consistency options include:
+
+- Strong consistency: Reads observe writes according to a defined linearizable ordering, usually requiring coordination.
+- Eventual consistency: Replicas may temporarily disagree but converge if updates stop.
+- Causal or session guarantees: Provide selected consistency properties without requiring full global linearizability.
+
+In a geographically distributed system, stronger coordination often increases latency and can reduce availability during network partitions.
+
+## 5. Failure handling
+
+Use replication, health checks, replica promotion, anti-entropy repair, and versioned updates. Conflict resolution may use timestamps, version vectors, or application-defined merging, depending on the consistency model.
+
+A system must also handle rebalancing, hot partitions, and recovery after a region becomes available again.
+
+### Interview-ready answer
+
+“I would partition keys using consistent hashing or ranges, replicate each partition across failure domains, and expose a routing layer that understands partition ownership. I would choose the consistency model based on application requirements: strong consistency for correctness-sensitive updates and weaker consistency where availability and latency dominate. The design would include replica failover, conflict resolution where needed, rebalancing, and monitoring for hotspots and replication lag.”
+
+# Q31. Design a Highly Available Distributed Service
+
+## 1. Problem statement
+
+Design a service that continues operating when individual application instances, machines, or availability zones fail.
+
+High availability is not simply running multiple servers. It requires removing single points of failure across the request path and dependencies.
+
+## 2. Architecture
+
+Clients → redundant load balancers
+
+Availability Zone A
+
+App replicas
+
+Database replica
+
+Availability Zone B
+
+App replicas
+
+Database replica
+
+Health checks, failover, durable storage and recovery procedures
+
+## 3. Design principles
+
+- Run multiple application replicas across independent failure domains.
+- Use health checks to remove unhealthy instances from routing.
+- Avoid storing essential session state only in application memory.
+- Replicate durable data and define database failover behavior.
+- Use timeouts, bounded retries, circuit breakers, and graceful degradation.
+- Keep capacity headroom for surviving replicas after a failure.
+
+## 4. Availability calculations
+
+If a service is available 99.9% of the time, its annual downtime budget is approximately:
+
+\\[ 365 \times 24 \times 60 \times 0.001 =525.6\text{ minutes} \\]
+
+That is about 8.76 hours per year.
+
+For a request path consisting of strictly serial dependencies, availability can be lower than that of the individual components. Redundancy can improve availability, but only if failover works and shared dependencies do not remain single points of failure.
+
+## 5. Disaster recovery versus high availability
+
+- High availability aims to survive routine component and zone failures with minimal interruption.
+- Disaster recovery handles larger failures, such as regional outages or severe data corruption, often with explicit recovery objectives.
+
+### Interview-ready answer
+
+“I would deploy stateless application replicas across multiple availability zones behind a health-aware load balancer. Durable state would live in replicated storage with a tested failover strategy. I would use timeouts, circuit breakers, bounded retries, and graceful degradation to prevent cascading failures. I would define an availability SLO, size the remaining capacity to survive a zone failure, and validate recovery through regular failure-injection and disaster-recovery exercises.”
+
+# Q32. Design a Distributed Locking Service
+
+## 1. Problem statement
+
+Build a service that allows multiple distributed processes to coordinate access to a shared resource so that only one valid owner performs a protected operation at a time.
+
+Examples include preventing duplicate scheduled jobs or coordinating a migration.
+
+## 2. Architecture
+
+Worker A / Worker B / Worker C
+
+Lock service: acquire / renew / release
+
+Lease + owner token + fencing token
+
+Protected resource validates the fencing token
+
+## 3. Basic lock lifecycle
+
+1. A worker requests a lock for a resource.
+2. The lock service atomically grants ownership if the lock is available.
+3. The worker receives a unique ownership token and lease expiry.
+4. The worker renews the lease while operating.
+5. The worker releases the lock when complete.
+6. If the worker crashes, the lease expires and another worker can acquire the lock.
+
+A lease prevents locks from being held forever after crashes, but expiry alone does not guarantee correctness.
+
+## 4. The stale-owner problem
+
+Suppose Worker A acquires a lock and pauses for a long time. Its lease expires, and Worker B acquires a new lock. Worker A then resumes and tries to write.
+
+Both workers may now believe they own the resource.
+
+Fencing tokens address this by assigning monotonically increasing token numbers to successive lock owners. The protected resource rejects writes carrying an older token than the latest accepted token.
+
+The resource must actually enforce this check. A lock service alone cannot prevent every stale write to an independent system.
+
+## 5. When to use distributed locks
+
+Use a lock only when the protected invariant requires mutual exclusion. If an atomic database update, unique constraint, optimistic concurrency, or idempotent operation solves the problem more simply, prefer that approach.
+
+### Interview-ready answer
+
+“I would implement locks as leases with unique ownership tokens, atomic acquisition, renewal, and expiry. I would not rely on lease expiry alone, because a paused worker can resume after losing ownership. For correctness-sensitive writes, I would use fencing tokens enforced by the protected resource. I would also make acquisition and release idempotent, handle clock and network failures carefully, and prefer database-level atomic operations when they can eliminate the need for distributed locking.”
+
+# Q33. Design a Leader Election Mechanism
+
+## 1. Problem statement
+
+Select one active coordinator among several distributed nodes, for example to schedule jobs, manage partition assignments, or perform a single administrative task.
+
+The system must avoid split-brain situations where multiple nodes believe they are leader.
+
+## 2. Architecture
+
+Node A
+
+Node B
+
+Node C
+
+Consensus / coordination service
+
+Leader with term / epoch + follower nodes
+
+## 3. How election works
+
+A coordination system can use a consensus protocol such as Raft to elect a leader among participating nodes.
+
+At a high level:
+
+1. Nodes exchange heartbeats and monitor leader health.
+2. If the leader becomes unavailable, eligible followers initiate an election.
+3. A candidate collects the required votes under the consensus protocol.
+4. The elected leader begins operating under a new term or epoch.
+5. Followers accept valid updates from the current leader.
+
+In a replicated consensus group, a majority quorum is needed for progress. This prevents two disjoint groups from independently committing conflicting leadership decisions.
+
+## 4. Why a heartbeat timeout is not enough
+
+A slow or partitioned node may believe the old leader has failed, while the old leader still believes it is active.
+
+Therefore, the system must use terms, epochs, quorum rules, or fencing mechanisms to ensure that stale leaders cannot continue performing protected operations.
+
+Leader election also does not automatically guarantee application correctness: state replication and safe recovery are separate concerns.
+
+### Interview-ready answer
+
+“I would use a proven consensus-based coordination system rather than inventing leader election from heartbeats alone. The elected leader would operate under a monotonically increasing term, and protected operations would validate that term or an associated fencing token. If a leader fails, a quorum elects a replacement. I would account for network partitions, quorum loss, and stale leaders, and avoid treating a heartbeat timeout as proof that the previous leader has stopped.”
+
+# Q34. Design a Distributed Configuration Management Service
+
+## 1. Problem statement
+
+Build a centralized service for managing configuration across thousands of application instances, including feature flags, service endpoints, timeouts, and model-routing policies.
+
+Requirements:
+
+- Versioned configuration.
+- Controlled rollout and rollback.
+- Fast propagation.
+- Environment and tenant-specific overrides.
+- Validation and audit history.
+
+## 2. Architecture
+
+Admin UI / configuration API
+
+Validation + versioned configuration store
+
+Change event / watch service
+
+Application A
+
+Local config cache
+
+Application B
+
+Local config cache
+
+## 3. How updates propagate
+
+1. An administrator submits a configuration change.
+2. The service validates its schema, values, permissions, and compatibility.
+3. The new immutable configuration version is persisted.
+4. A change event notifies subscribed application instances.
+5. Instances fetch and validate the new version.
+6. They atomically activate it and report the applied version.
+
+Applications can use long polling, streaming subscriptions, or a message bus to receive updates. A periodic refresh should provide recovery if notifications are missed.
+
+## 4. Important design decisions
+
+Push versus pull: Push provides faster propagation but requires managing connections and missed events. Pull is simpler but may introduce propagation delay. A hybrid model is often practical.
+
+Consistency: Most applications can tolerate a short propagation delay. Safety-critical configuration may require explicit version checks or coordinated activation.
+
+Rollback: Keep immutable versions and support reverting to a known-good version.
+
+Last-known-good configuration: If the configuration service becomes unavailable, applications can continue using a validated local copy, provided the application can safely operate with that configuration.
+
+Secrets: Do not use ordinary configuration storage as a substitute for a secrets manager.
+
+### Interview-ready answer
+
+“I would build a versioned configuration store with schema validation, audit history, and controlled deployment. Applications would subscribe to configuration changes, fetch the new version, validate it, and activate it atomically. A periodic refresh would recover missed notifications, while last-known-good configuration would support temporary outages. I would also implement environment-specific policies, canary rollouts, and immediate rollback for unsafe changes.”
+
+# Q35. Design a Service Discovery System
+
+## 1. Problem statement
+
+In a dynamic cloud environment, service instances are frequently created, restarted, scaled, or removed. Clients need to find healthy instances without relying on hardcoded IP addresses.
+
+## 2. Architecture
+
+Service instances register / expose endpoints
+
+Service registry + health information
+
+Discovery API / DNS / load balancer
+
+Client selects a healthy instance
+
+## 3. How discovery works
+
+1. A new service instance starts.
+2. It registers its identity, endpoint, and metadata, or is registered automatically by the orchestration platform.
+3. Health checks determine whether it is ready to receive traffic.
+4. Clients or proxies discover eligible endpoints.
+5. When an instance fails or terminates, it is removed from the eligible set.
+
+In Kubernetes, Services and EndpointSlices provide service-level discovery, while the platform manages pod endpoints as workloads change.
+
+## 4. Client-side versus server-side discovery
+
+Client-side discovery: The client queries a registry and chooses an endpoint. This offers flexibility but requires client libraries to implement discovery and load balancing.
+
+Server-side discovery: A proxy or load balancer selects the destination. This centralizes routing behavior and reduces client complexity.
+
+## 5. Failure handling
+
+Use health checks, registration expiry, and endpoint refreshes. Avoid relying on one registry instance as a single point of failure.
+
+Readiness and liveness are different: an application can be alive but not ready to accept traffic.
+
+### Interview-ready answer
+
+“I would use a dynamic service registry or the cloud orchestration platform's native discovery mechanism. Instances would become routable only after passing readiness checks, and terminated or unhealthy endpoints would be removed automatically. I would use DNS or a proxy-based discovery layer according to the environment, with caching and refresh to reduce registry load. I would also distinguish liveness from readiness and monitor stale endpoints and discovery latency.”
+
+# Q36. Design a Distributed Logging and Event Collection Service
+
+## 1. Problem statement
+
+Build a platform that collects logs and structured events from thousands of services, stores them durably, and supports searching, filtering, and troubleshooting.
+
+The system must support high write throughput without overwhelming application services or storage.
+
+## 2. Architecture
+
+Applications → log agents / collectors
+
+Ingestion API / durable buffer
+
+Stream processors: parse, redact, enrich
+
+Search index
+
+Recent logs
+
+Object storage
+
+Long-term archive
+
+## 3. Processing pipeline
+
+1. Applications emit structured logs containing timestamps, severity, service, and correlation IDs.
+2. Collectors batch and compress events.
+3. A durable ingestion layer absorbs bursts.
+4. Processing workers parse records, normalize fields, and redact sensitive data.
+5. Recent logs are indexed for search.
+6. Older logs move to cheaper storage under retention policies.
+
+The search index should not necessarily store every log forever. Indexing everything indefinitely can become prohibitively expensive.
+
+## 4. Reliability and scaling
+
+- Use local buffering to reduce log loss during temporary network outages.
+- Apply backpressure and sampling when ingestion is overloaded.
+- Partition by suitable time and service-related keys.
+- Enforce retention and lifecycle policies.
+- Avoid high-cardinality indexed fields unless justified.
+- Protect the platform from recursive logging failures.
+
+### Interview-ready answer
+
+“I would use lightweight collectors to batch and compress structured logs, send them to a durable ingestion layer, and process them asynchronously. Recent logs would go to a searchable index, while long-term data would be archived in object storage. I would implement redaction, retention, backpressure, and sampling policies, and monitor ingestion lag, dropped events, indexing latency, and storage cost.”
+
+# Q37. Design a Real-Time Metrics Aggregation Platform
+
+## 1. Problem statement
+
+Collect metrics from services and infrastructure, aggregate them into time-series data, and provide dashboards and alerts.
+
+Examples include request latency, error rate, GPU utilization, queue depth, and model throughput.
+
+## 2. Architecture
+
+Applications / exporters
+
+Collectors / scraping / ingestion API
+
+Time-series storage + aggregation workers
+
+Dashboards
+
+Alert evaluator
+
+## 3. Metrics and cardinality
+
+A time series is identified by its metric name and labels. For example:
+
+`http_requests_total{service="api",status="500"}`
+
+Labels enable flexible queries, but unbounded labels such as request IDs or arbitrary user IDs can create millions of unique time series.
+
+Therefore:
+
+- Keep labels bounded and meaningful.
+- Use histograms for latency distributions.
+- Aggregate at ingestion or query time where appropriate.
+- Apply retention and downsampling.
+- Separate high-volume event data from metrics.
+
+## 4. Alerting
+
+Alerts should evaluate meaningful conditions, not just isolated noisy data points.
+
+For example, trigger an alert when the error rate remains above a threshold for a specified period. For service-level objectives, multi-window burn-rate alerts can detect rapid consumption of the error budget.
+
+### Interview-ready answer
+
+“I would collect metrics through scraping or push-based ingestion, store them in a time-series system, and support dashboards and rule-based alert evaluation. I would carefully control label cardinality, use histograms for latency distributions, and apply aggregation and retention policies. Alerts would be based on actionable conditions and service objectives, with monitoring for ingestion delay, query latency, missing data, and alert noise.”
+
+# Q38. Design a System Supporting Millions of Concurrent Connections
+
+## 1. Problem statement
+
+Build a service that maintains a large number of persistent client connections, such as WebSockets for chat, collaborative applications, or live AI responses.
+
+The challenge is that connections consume memory, file descriptors, network capacity, and processing resources even when they are idle.
+
+## 2. Architecture
+
+Clients → global / regional load balancer
+
+Connection gateway A
+
+Persistent sockets
+
+Connection gateway B
+
+Persistent sockets
+
+Pub/Sub or event bus for cross-instance messaging
+
+## 3. Key design decisions
+
+Asynchronous I/O: Use an event-driven runtime so many mostly idle connections do not require one operating-system thread per connection.
+
+Connection routing: Maintain a mapping from user or connection ID to the gateway instance that owns the live connection.
+
+Cross-instance delivery: Publish messages to an event bus or routing layer so a service can reach a user connected to another gateway.
+
+Heartbeats: Detect dead connections and clean up stale connection state.
+
+Backpressure: Bound outgoing buffers. If a client cannot consume messages, drop low-priority messages, disconnect it, or apply an explicit buffering policy.
+
+## 4. Capacity planning
+
+Suppose each connection consumes an average of 50 KB of total application and protocol memory. One million connections require roughly:
+
+\\[ 1{,}000{,}000 \times 50\text{ KB} \approx 50\text{ GB} \\]
+
+That is an illustrative estimate; real usage depends on runtime, buffers, TLS state, connection metadata, and traffic patterns. Capacity planning must also include file descriptors, network bandwidth, and CPU.
+
+### Interview-ready answer
+
+“I would deploy horizontally scalable, event-driven connection gateways behind load balancers. Each gateway would own a subset of persistent connections, while a shared routing or pub/sub layer would deliver messages across instances. I would use heartbeats, bounded buffers, connection quotas, and backpressure to protect the service. I would scale based on active connections, memory, outbound bandwidth, event-loop saturation, and message delivery latency.”
+
+# Q39. Design an Exactly-Once Processing Pipeline
+
+## 1. Problem statement
+
+Design a pipeline where each logical event affects the business result only once, even if messages are redelivered or workers crash.
+
+For example, a payment event should not charge a customer twice because a consumer retried a message.
+
+## 2. Architecture
+
+Producer → durable event log
+
+Consumer with event ID + deduplication
+
+Atomic business update + processed-event record
+
+Commit progress / acknowledge message
+
+## 3. The critical failure scenario
+
+A consumer reads an event and updates a database, but crashes before acknowledging the message.
+
+When the message is redelivered, the consumer may perform the update again.
+
+The solution is not simply “enable exactly-once in the broker.” The business operation must also be protected.
+
+## 4. Practical solution
+
+For a database-backed consumer:
+
+1. Assign each event a stable unique ID.
+2. Begin a database transaction.
+3. Insert the event ID into a processed-events table with a uniqueness constraint.
+4. If the event was already processed, skip the duplicate effect.
+5. Otherwise, perform the business update.
+6. Commit both changes atomically.
+7. Acknowledge the message after the transaction commits.
+
+This prevents duplicate database effects when the database transaction and deduplication record share the same atomic boundary.
+
+For external APIs, use provider-supported idempotency keys or a durable outbox/inbox pattern. A database transaction cannot atomically include an arbitrary external HTTP call.
+
+## 5. Trade-offs
+
+- Deduplication state requires storage and retention management.
+- Exactly-once semantics can reduce throughput due to coordination.
+- Some operations cannot be made atomic across all systems.
+- Effectively-once business behavior is often more practical than claiming universal exactly-once delivery.
+
+### Interview-ready answer
+
+“I would start with at-least-once message delivery and make the business effect idempotent. Each event would have a stable ID, and the consumer would atomically record that ID with the database update. Acknowledgment would occur only after the transaction commits. For external side effects, I would use provider idempotency keys, an outbox pattern, or reconciliation. I would explicitly define the exactly-once boundary rather than assuming a broker guarantee covers every downstream system.”
+
+# Q40. Design a Fault-Tolerant Distributed Workflow Engine
+
+## 1. Problem statement
+
+Build a platform that executes multi-step workflows across distributed workers, survives failures, and resumes from the last safe point.
+
+Examples include document processing, payment workflows, model training pipelines, and long-running AI agent tasks.
+
+## 2. Architecture
+
+Workflow API + versioned definition
+
+Durable orchestrator + workflow state store
+
+Task queue + distributed workers
+
+External services / databases / AI tools
+
+Persist results, checkpoints and next state
+
+## 3. How the workflow executes
+
+Suppose a workflow contains:
+
+`Upload → Extract → Validate → Generate report`
+
+Each step has an explicit status and persisted output. The orchestrator determines which steps are eligible to execute and dispatches them to workers.
+
+After a successful step, the system records its result and advances the workflow state. If a worker crashes, the task can be retried or reassigned.
+
+The orchestrator must distinguish between a task that was never executed and one that executed successfully but failed to report completion.
+
+## 4. Important reliability patterns
+
+Durable state: Persist workflow status, task attempts, outputs, and checkpoints.
+
+Idempotency: Use stable operation IDs so retrying a step does not duplicate its external effects.
+
+Timeouts and retries: Use bounded retries with backoff and classify permanent versus transient failures.
+
+Compensation: For multi-step business operations, use a saga pattern when earlier completed actions need compensating actions after a later failure.
+
+Versioning: Store the workflow definition version used for each execution so a later definition change does not silently alter an in-progress workflow.
+
+Human approval: Support a durable waiting state for workflows that require external approval.
+
+## 5. Why not use a single long-running process?
+
+A single process can lose its in-memory progress after a crash, deployment, or machine restart. Durable orchestration stores enough information to recover without restarting every completed step.
+
+### Interview-ready answer
+
+“I would implement a durable workflow orchestrator backed by persistent execution state and a task queue. Each step would have a defined input, output, retry policy, timeout, and idempotency key. The orchestrator would checkpoint successful results, resume eligible work after failures, and support compensation for multi-step operations where rollback is not atomic. Workflow definitions would be versioned, and I would monitor execution duration, retry rates, stuck workflows, and recovery success.”
+
+## Final revision: Q21–40 concepts you must be able to explain
+
+| Concept                    | Questions  | Key point                                                     |
+| -------------------------- | ---------- | ------------------------------------------------------------- |
+| Caching and rate limiting  | 23, 29     | Reduce load while controlling consistency and quotas          |
+| Queues and event streaming | 25, 26, 28 | Durable processing, partitioning, retries, and backpressure   |
+| Distributed coordination   | 32, 33     | Leases, fencing tokens, consensus, and split-brain prevention |
+| High availability          | 30, 31     | Replication, consistency, failover, and recovery              |
+| Scheduling and workflows   | 27, 40     | Durable state, task ownership, idempotency, and checkpoints   |
+| Observability              | 36, 37     | Logs, metrics, cardinality, and actionable alerts             |
+| High concurrency           | 38         | Event-driven I/O, resource limits, and backpressure           |
+| Exactly-once processing    | 39         | Atomic business effects and deduplication                     |
+
+My recommendation for your Google interview: Pay particular attention to Q23, Q25, Q29, Q30, Q31, Q32, Q39, and Q40. These questions teach foundational patterns that you can reuse when designing AI inference platforms, agent orchestration systems, and cloud-native services.
+
+For every design, practice answering this follow-up: “What happens if the component fails immediately after performing its operation but before confirming success?” Your answer should address durable state, retries, idempotency, and recovery.
