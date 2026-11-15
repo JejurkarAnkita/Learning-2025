@@ -288,6 +288,21 @@ Break the problem down into **levels of abstraction**.
 - **Efficient**: High-level planning can be done quickly, deferring detailed planning until it's needed.
 
 ---
+Note - "Long-term planning in AI agents means enabling an agent to achieve a bigger goal by breaking it into smaller, manageable tasks.
+We can implement this using hierarchical planning, where the agent first understands the main goal and decomposes it into subtasks and further into smaller actions.
+For example, if a user asks an agent to plan a trip to Goa, it can divide the task into transportation, hotel booking and itinerary planning.
+The agent maintains the task status using state management or memory, executes actions using tools, and monitors the results.
+If any task fails, it can replan and choose an alternative approach.
+This makes the agent capable of handling complex, multi-step tasks rather than just responding to individual queries."
+
+Remember this formula:
+Goal → Decompose → Prioritize → Execute → Monitor → Replan
+Three important interview keywords:
+- Task Decomposition: Breaking a big task into smaller tasks.
+- State Management: Tracking task progress.
+- Replanning: Modifying the plan when something goes wrong.
+
+---
 
 ## Q48. What are the challenges in maintaining consistency in agent responses?
 
