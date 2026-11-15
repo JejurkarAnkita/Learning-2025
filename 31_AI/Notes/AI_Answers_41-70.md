@@ -567,6 +567,16 @@ Evaluating an agent is much harder than evaluating a simple classifier. You need
     - Test the agent with noisy or adversarial inputs to see how it handles unexpected situations.
 
 ---
+evaluate different parameters:
+1. Task Success Rate: Whether the agent successfully achieves the user's goal.
+2. Accuracy: Whether the generated response or result is correct.
+3. Tool-Calling Accuracy: Whether it selects and uses the appropriate tools.
+4. Planning Quality: Whether it follows the correct steps to complete a task.
+5. Latency: How much time it takes to complete the task.
+6. Cost Efficiency: How many tokens, LLM calls and API calls are consumed.
+7. Robustness: How well it handles errors and unexpected situations.
+8. Safety: Whether it follows security rules and avoids unauthorized actions.
+---
 
 ## Q55. What metrics do you track for agent success rate and user satisfaction?
 
