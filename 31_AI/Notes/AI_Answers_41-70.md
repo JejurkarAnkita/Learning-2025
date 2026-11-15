@@ -232,6 +232,14 @@ It's the vast body of **implicit knowledge** that humans use to navigate the wor
 
 **Challenge**: True common sense remains one of the biggest unsolved problems in AI. Current systems are getting better but can still make absurdly "un-common-sense" mistakes.
 
+Note - "Common Sense Reasoning is the ability of an AI agent to understand everyday situations and make sensible decisions using basic knowledge and logic.
+
+For example, if a user asks an agent whether they should go outside without an umbrella when it is raining, the agent understands that they may get wet and recommends carrying an umbrella.
+
+In AI agents, LLMs provide much of this common-sense knowledge, while memory, knowledge bases and external tools can provide additional context to make better decisions.
+
+It helps AI agents make practical decisions instead of blindly following instructions."
+
 ---
 
 ## Q47. How do you implement long-term planning in agents (hierarchical planning)?
