@@ -81,7 +81,12 @@
    → Yes → Full Re-Training
    → No → Fine-Tuning
 ```
-
+Remember this example
+Imagine teaching a student:
+1. Pre-training: Student learns general subjects.
+2. Fine-tuning: Student specializes in AI/ML.
+3. Retraining: Student studies updated concepts to improve knowledge.
+Interview tip: Fine-tuning is a type of additional training on a pre-trained model, whereas retraining generally means training the model again with updated or revised training data.
 ---
 
 ## 2. Traditional ML Techniques
