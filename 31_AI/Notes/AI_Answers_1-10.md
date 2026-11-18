@@ -115,6 +115,9 @@ Returns: Cat and Dog
 - **Chroma** - Simple, good for learning
 - **FAISS** (Facebook) - Very fast
 
+<img width="778" height="417" alt="image" src="https://github.com/user-attachments/assets/ab0b6141-bf33-4287-9b14-92f87cd6fcc3" />
+
+
 ---
 
 ## Q3. How retrieval happens from RAG - tell the flow from user query to final response generation?
