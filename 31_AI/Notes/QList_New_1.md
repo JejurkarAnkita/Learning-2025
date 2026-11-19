@@ -626,6 +626,8 @@ A **Vector Database** stores embedding vectors and enables fast *approximate nea
 
 **Flow:** Vector search (fast, rough) → Reranker (slow, precise) → Top-3 chunks → LLM.
 
+<img width="1137" height="752" alt="image" src="https://github.com/user-attachments/assets/6dcfb74f-a77e-4ac0-956e-b073677cb5a6" />
+
 ---
 
 ## Q9. What is hybrid search? (BM25 + vector search)
