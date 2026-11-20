@@ -320,7 +320,16 @@ def func2():
     
 # print(a)  # ❌ Error - a doesn't exist here
 ```
+Simple definition:
 
+A namespace in Python is a container that stores names (variables, functions, classes) and maps them to their corresponding objects.
+
+In simple words, a namespace helps Python know which variable or function we are referring to and avoids naming conflicts.
+
+Common follow-up interview questions
+Q1. What is the difference between namespace and scope?
+- Namespace: Where names are stored and mapped to objects.
+- Scope: Where a name can be accessed in the code.
 ---
 
 ### Q11: What is scope in Python?
