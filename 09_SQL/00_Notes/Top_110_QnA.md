@@ -649,7 +649,20 @@ WHERE salary > (
   WHERE e2.department = e1.department  -- references outer query!
 );
 ```
+Does the inner query use an outer query column?
 
+NO
+Non-correlated
+
+Inner query is independent and can run alone.
+YES
+Correlated
+
+Inner query depends on the outer query's current row.
+Interview-ready answer
+"A non-correlated subquery is an independent query that does not depend on the outer query and can execute on its own. A correlated subquery depends on the outer query because it references one or more columns from the outer query. Conceptually, a correlated subquery is evaluated for each row of the outer query, while a non-correlated subquery can be executed independently."
+
+One advanced interview point: A correlated subquery is conceptually evaluated for each outer row, but the database optimizer may optimize it and avoid literally executing it separately for every row
 ---
 
 ### Q38. What is EXISTS and how does it work?
