@@ -507,6 +507,8 @@ JOIN salary_grades g ON e.salary BETWEEN g.min_salary AND g.max_salary;
 SELECT * FROM orders NATURAL JOIN customers;
 -- Automatically joins on any common column names (e.g., customer_id)
 ```
+It matches the common column values and returns the matching records.
+🧠 Memory trick: Natural Join = Find common column → Match values → Combine rows.
 
 ---
 
