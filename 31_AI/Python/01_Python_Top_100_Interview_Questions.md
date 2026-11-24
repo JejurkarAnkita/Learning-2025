@@ -1527,6 +1527,11 @@ animal_sound(bird)   # Tweet!
 for animal in [dog, cat, bird]:
     animal_sound(animal)
 ```
+Type	Meaning	Example
+Method overriding	Child class provides its own implementation of a parent method	Parent and child both have sound()
+Duck typing	Python focuses on what an object can do, rather than its class	Different objects having a sound() method
+Operator overloading	Same operator behaves differently for different data types	+ adds numbers or joins strings
+<img width="241" height="625" alt="image" src="https://github.com/user-attachments/assets/8529141a-b48c-47a6-ab88-1f530604935d" />
 
 ---
 
