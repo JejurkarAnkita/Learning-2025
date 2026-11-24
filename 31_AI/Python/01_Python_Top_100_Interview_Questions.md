@@ -1121,7 +1121,14 @@ original = [1, 2, [3, 4]]
 shallow = original[:]  # Shallow copy
 deep = copy.deepcopy(original)  # Deep copy
 ```
+Copy vs Deepcopy in Python
+Both are used to copy objects in Python, but they behave differently when the object contains other objects, such as a list inside a list.
 
+1. Shallow Copy (copy)
+A shallow copy creates a new outer object, but the inner objects are still shared between the original and copied object.
+
+2. Deep Copy (deepcopy)
+A deep copy creates a new outer object and also copies the inner objects recursively.
 ---
 
 ### Q33: What is the difference between append and += for lists?
