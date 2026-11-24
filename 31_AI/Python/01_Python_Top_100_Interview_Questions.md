@@ -822,7 +822,14 @@ How does it work?
 ### Q24: What is a lambda function?
 
 **Answer:**
+Interview-ready answer
+"A lambda function in Python is a small anonymous function defined using the lambda keyword. It can take multiple arguments but contains only one expression, whose result is automatically returned. It is commonly used for simple operations, especially with functions like map(), filter(), and sorted()."
+Easy trick to remember
+Normal function = def + name + multiple lines if needed.
 
+Lambda function = lambda + no function name + one expression.
+
+Note: Lambda functions can have multiple arguments, but only one expression.
 Anonymous function defined with `lambda` keyword.
 
 ```python
