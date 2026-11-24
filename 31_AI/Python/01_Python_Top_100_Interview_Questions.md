@@ -803,7 +803,20 @@ gen = (x**2 for x in range(5))
 print(next(gen))  # 0
 print(next(gen))  # 1
 ```
+Interview-ready answer
+"A generator in Python is a special type of function that returns values one at a time using the yield keyword. It pauses its execution after yielding a value and resumes from the same point when the next value is requested. Generators are memory-efficient because they generate values on demand instead of storing all values in memory."
+Easy trick to remember
+Normal function → return → returns a value and finishes.
 
+Generator → yield → gives a value and pauses.
+
+Interview tip: A generator is an iterator, but it is created easily using a function with yield.
+
+How does it work?
+- yield gives one value at a time.
+- The function pauses after each yield.
+- When called again, it continues from where it paused.
+- It remembers its previous state.
 ---
 
 ### Q24: What is a lambda function?
