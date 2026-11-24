@@ -1394,12 +1394,13 @@ print(Dog.info())      # Species: Canis familiaris
 print(Dog.description())  # Dogs are loyal pets
 ```
 Class vs Function
-Class	Function
-Blueprint for creating objects	Block of code to perform a task
-Can contain data and methods	Usually performs a specific operation
-Used to model entities and group related data and behavior	Used to perform reusable operations
-Objects are created using a class	Functions are called to execute them
-Example: Car, Employee	Example: calculate_salary(), add()
+| Class | Function |
+|---|---|
+| Blueprint for creating objects | Block of code to perform a task |
+| Can contain data and methods | Usually performs a specific operation |
+| Used to model entities and group related data and behavior | Used to perform reusable operations |
+| Objects are created using a class | Functions are called to execute them |
+| Example: `Car`, `Employee` | Example: `calculate_salary()`, `add()` |
 ---
 
 ### Q39: What is inheritance?
@@ -1440,12 +1441,14 @@ print(isinstance(dog, Dog))     # True
 print(isinstance(dog, Cat))     # False
 ```
 Types of inheritance in Python
-Type	Meaning
-Single	One child inherits from one parent
-Multiple	One child inherits from multiple parents
-Multilevel	A child inherits from a class that itself inherits from another class
-Hierarchical	Multiple child classes inherit from one parent
-Hybrid	Combination of different inheritance types
+| Type | Meaning | Example |
+|---|---|---|
+| Single Inheritance | One child inherits from one parent | `Dog(Animal)` |
+| Multiple Inheritance | One child inherits from multiple parents | `Child(Parent1, Parent2)` |
+| Multilevel Inheritance | A class inherits from a child class in an inheritance chain | `A → B → C` |
+| Hierarchical Inheritance | Multiple child classes inherit from one parent | `Animal → Dog, Cat` |
+| Hybrid Inheritance | Combination of two or more inheritance types | Combination of multiple and multilevel inheritance |
+
 
 Interview-ready answer
 "Inheritance is an object-oriented programming concept in which a child class acquires the attributes and methods of a parent class. It promotes code reusability and allows us to extend or customize existing functionality. In Python, inheritance is implemented by passing the parent class name inside the child class definition."
@@ -1527,11 +1530,21 @@ animal_sound(bird)   # Tweet!
 for animal in [dog, cat, bird]:
     animal_sound(animal)
 ```
-Type	Meaning	Example
-Method overriding	Child class provides its own implementation of a parent method	Parent and child both have sound()
-Duck typing	Python focuses on what an object can do, rather than its class	Different objects having a sound() method
-Operator overloading	Same operator behaves differently for different data types	+ adds numbers or joins strings
-<img width="241" height="625" alt="image" src="https://github.com/user-attachments/assets/8529141a-b48c-47a6-ab88-1f530604935d" />
+| Inheritance | Polymorphism |
+|---|---|
+| One class inherits properties and methods from another class | Same method or interface can have different behaviors |
+| Mainly promotes code reusability | Promotes flexibility and extensibility |
+| Establishes a parent-child relationship between classes | Allows different objects to respond differently to the same method call |
+| Example: Dog inherits from Animal | Dog and Cat implement `sound()` differently |
+
+ Types / Ways of Achieving Polymorphism in Python
+
+| Type | Meaning | Example |
+|---|---|---|
+| Method Overriding | Child class provides its own implementation of a parent class method | Parent and child both have `sound()` |
+| Duck Typing | Python focuses on what an object can do rather than its class | Different objects having a `sound()` method |
+| Operator Overloading | Same operator behaves differently depending on the data types | `10 + 20` and `"Hello" + "World"` |
+
 
 ---
 
