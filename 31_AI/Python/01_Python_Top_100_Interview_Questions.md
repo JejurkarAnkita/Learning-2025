@@ -1325,6 +1325,21 @@ def slow_function():
 
 slow_function()
 ```
+Why do we use decorators?
+Decorators are commonly used for:
+- Logging
+- Authentication and authorization
+- Measuring execution time
+- Caching results
+- Checking permissions
+
+Interview-ready answer
+"A decorator in Python is a function that takes another function as input and extends or modifies its behavior without changing its original code. It uses the @ syntax and is commonly used for logging, authentication, caching, and measuring execution time."
+
+Easy trick to remember
+Decorator = Original function + Extra functionality
+
+The original function remains unchanged; the decorator adds behavior around it.
 
 ---
 
@@ -1333,6 +1348,7 @@ slow_function()
 **Answer:**
 
 Classes define blueprints for objects.
+It defines what data an object will have and what actions it can perform.
 
 ```python
 class Dog:
@@ -1377,7 +1393,13 @@ print(Dog.info())      # Species: Canis familiaris
 # Call static method
 print(Dog.description())  # Dogs are loyal pets
 ```
-
+Class vs Function
+Class	Function
+Blueprint for creating objects	          Block of code to perform a task
+Can contain data and methods	          Usually performs a specific operation
+Used to model real-world entities or related data and behavior	Used to perform reusable operations
+Object is created using the class	        Function is called to execute it
+Example: Car, Employee	            Example: calculate_salary(), add()
 ---
 
 ### Q39: What is inheritance?
@@ -1417,7 +1439,18 @@ print(isinstance(dog, Animal))  # True
 print(isinstance(dog, Dog))     # True
 print(isinstance(dog, Cat))     # False
 ```
+Types of inheritance in Python
+Type	Meaning
+Single	One child inherits from one parent
+Multiple	One child inherits from multiple parents
+Multilevel	A child inherits from a class that itself inherits from another class
+Hierarchical	Multiple child classes inherit from one parent
+Hybrid	Combination of different inheritance types
 
+Interview-ready answer
+"Inheritance is an object-oriented programming concept in which a child class acquires the attributes and methods of a parent class. It promotes code reusability and allows us to extend or customize existing functionality. In Python, inheritance is implemented by passing the parent class name inside the child class definition."
+
+Easy trick to remember: Parent class → shares functionality → Child class.
 ---
 
 ### Q40: What is super()?
@@ -1449,7 +1482,13 @@ print(dog.name)     # Buddy
 print(dog.breed)    # Golden Retriever
 print(dog.speak())  # Buddy says: Woof! (Some sound)
 ```
+Interview-ready answer ->
+"super() is a built-in Python function used to access methods of the parent class from the child class. It is commonly used to call the parent class constructor using super().__init__(). If a child class doesn't define its own constructor, it inherits the parent constructor. However, if the child defines its own constructor, the parent constructor is not automatically called; we need to explicitly call it using super()."
 
+Remember this trick ->
+No child constructor → Parent constructor inherited.
+
+Child constructor exists → Parent constructor needs super() if you want it executed.
 ---
 
 ### Q41: What is polymorphism?
