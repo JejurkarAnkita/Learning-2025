@@ -1693,7 +1693,16 @@ print(temp.celsius)      # 30
 
 # temp.fahrenheit = 100  # ❌ Error (no setter)
 ```
+|Property	| Normal Method|
+|Accessed like an attribute|	Called using parentheses|
+|Uses @property decorator}	Defined using def|
+|Useful for controlled access to data|	Useful for performing actions|
+|Example: emp.salary|	Example: emp.get_salary()|
 
+Interview-ready answer
+"In Python, a property is a feature that allows us to access a method like an attribute. We use the @property decorator to define a getter and @property_name.setter to define a setter. Properties help us control access to attributes, perform validation, and maintain encapsulation without changing the way the attribute is accessed."
+Easy trick to remember
+Property = Method that behaves like a variable.
 ---
 
 ### Q45: What is the difference between class method and static method?
