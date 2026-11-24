@@ -1991,7 +1991,11 @@ def my_context():
 with my_context() as resource:
     print(f"Using {resource}")
 ```
+"A context manager in Python is an object that manages resources by handling setup and cleanup automatically. It is commonly used with the with statement. For example, when opening a file using with open(), Python automatically closes the file after the block finishes, even if an exception occurs. Context managers use the __enter__() and __exit__() methods."
+Easy trick to remember
+Context Manager = Setup → Use → Cleanup
 
+Example: Open file → Read file → Automatically close file.
 ---
 
 ### Q52: What is the __init__ method?
