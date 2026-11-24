@@ -1395,11 +1395,11 @@ print(Dog.description())  # Dogs are loyal pets
 ```
 Class vs Function
 Class	Function
-Blueprint for creating objects	          Block of code to perform a task
-Can contain data and methods	          Usually performs a specific operation
-Used to model real-world entities or related data and behavior	Used to perform reusable operations
-Object is created using the class	        Function is called to execute it
-Example: Car, Employee	            Example: calculate_salary(), add()
+Blueprint for creating objects	Block of code to perform a task
+Can contain data and methods	Usually performs a specific operation
+Used to model entities and group related data and behavior	Used to perform reusable operations
+Objects are created using a class	Functions are called to execute them
+Example: Car, Employee	Example: calculate_salary(), add()
 ---
 
 ### Q39: What is inheritance?
