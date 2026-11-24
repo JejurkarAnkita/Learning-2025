@@ -1552,46 +1552,77 @@ for animal in [dog, cat, bird]:
 
 **Answer:**
 
-Hiding internal implementation and providing public interface.
+## **What is Encapsulation in Python?**
 
-```python
-class BankAccount:
-    def __init__(self, balance):
-        self.__balance = balance  # Private attribute
-    
-    # Public method
-    def deposit(self, amount):
-        if amount > 0:
-            self.__balance += amount
-            return f"Deposited ${amount}"
-        return "Invalid amount"
-    
-    # Public method
-    def withdraw(self, amount):
-        if amount > 0 and amount <= self.__balance:
-            self.__balance -= amount
-            return f"Withdrawn ${amount}"
-        return "Insufficient balance"
-    
-    # Public method to access private data
-    def get_balance(self):
-        return self.__balance
+**Encapsulation is an OOP concept that means wrapping data (variables) and methods (functions) together inside a class and controlling access to that data.**
 
-# Create object
-account = BankAccount(1000)
+In simple words, it protects data from being accessed or modified directly from outside the class.
 
-# Can't access private attribute directly
-# print(account.__balance)  # ❌ Error
+Think of an ATM machine:
 
-# Use public methods
-print(account.deposit(500))      # Deposited $500
-print(account.withdraw(200))     # Withdrawn $200
-print(account.get_balance())     # 1300
+- You can withdraw money.
+- You can check your balance.
+- But you cannot directly access or modify the bank's internal database.
 
-# Private attributes are name-mangled (weak privacy)
-print(account._BankAccount__balance)  # 1300 (possible but discouraged)
+This is the idea behind encapsulation.
+
+### **Simple Python example**
+
+```
+class BankAccount:    def __init__(self, balance):        self.__balance = balance    def deposit(self, amount):        self.__balance += amount    def get_balance(self):        return self.__balanceaccount = BankAccount(1000)account.deposit(500)print(account.get_balance())
 ```
 
+Output:
+
+```
+1500
+```
+
+### **How does it work?**
+
+- `__balance` is a private-style attribute.
+- We don't access it directly from outside the class.
+- `deposit()` provides a controlled way to update the balance.
+- `get_balance()` provides a way to read the balance.
+
+**Important:** Python does not enforce strict private access. Double underscore (`__`) triggers name mangling, making direct access harder, but it does not make the attribute completely inaccessible.
+
+### **Access modifiers in Python**
+
+| Type                    | Syntax   | Meaning                                                 |
+| ----------------------- | -------- | ------------------------------------------------------- |
+| Public                  | `name`   | Can be accessed from anywhere                           |
+| Protected (convention)  | `_name`  | Intended for use within the class and its subclasses    |
+| Private (name mangling) | `__name` | Name is modified internally to discourage direct access |
+
+### **Why do we use encapsulation?**
+
+1. Data protection.
+2. Controlled access to variables.
+3. Better code organization.
+4. Easier maintenance.
+5. Prevents accidental modification of data.
+
+### **Encapsulation vs Inheritance vs Polymorphism**
+
+| Concept       | Meaning                                                   | Main Purpose     |
+| ------------- | --------------------------------------------------------- | ---------------- |
+| Encapsulation | Bundling data and methods together and controlling access | Data protection  |
+| Inheritance   | Child class acquires parent class properties and methods  | Code reusability |
+| Polymorphism  | Same method/interface can behave differently              | Flexibility      |
+
+### **Interview-ready answer**
+
+"Encapsulation is one of the four main pillars of object-oriented programming. It means bundling data and methods together inside a class and restricting direct access to internal data. In Python, we use naming conventions like single underscore and double underscore to control access. It helps protect data and provides controlled access through methods or properties."
+
+### **Easy trick to remember**
+
+- **Encapsulation** = Protect and control data.
+- **Inheritance** = Reuse existing code.
+- **Polymorphism** = Same method, different behavior.
+- **Abstraction** = Hide implementation details and show only essential functionality.
+
+**Interview tip:** Encapsulation and abstraction are different. Encapsulation focuses on bundling and controlling access to data, whereas abstraction focuses on hiding unnecessary implementation details.
 ---
 
 ### Q43: What is the difference between __str__ and __repr__?
