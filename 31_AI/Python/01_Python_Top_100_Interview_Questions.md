@@ -2342,7 +2342,15 @@ class Person(metaclass=AutoPropertyMeta):
 
 print(Person._age)  # 25
 ```
+Interview-ready answer
+“A metaclass is a class that defines how other classes are created. In Python, the default metaclass is type. Metaclasses are useful when we need to customize class creation, such as automatically adding methods or enforcing rules on classes.”
 
+Memory trick
+Object → Class → Metaclass
+
+- Class creates objects.
+- Metaclass creates classes.
+Think: A metaclass is a blueprint for a class.
 ---
 
 ### Q62: What is the difference between callable and call?
@@ -2368,7 +2376,52 @@ obj = MyClass()
 result = obj()  # Calls __call__ method
 print(result)   # "Called"
 ```
+## **What is the difference between&#x20;**`callable`**&#x20;and&#x20;**`__call__`**&#x20;in Python?**
 
+Both are related to calling objects like functions, but they have different purposes.
+
+### **1.&#x20;**`callable()`
+
+`callable()` is a **built-in Python function** that checks whether an object can be called using parentheses `()`.
+
+It returns `True` or `False`.
+
+```
+def greet():    print("Hello")print(callable(greet))   # Trueprint(callable(10))      # False
+```
+
+A function is callable, but an integer is not.
+
+### **2.&#x20;**`__call__()`
+
+`__call__()` is a **special method** that makes an object of a class callable like a function.
+
+```
+class Employee:    def __call__(self):        print("Employee object called")emp = Employee()emp()  # Calls __call__()
+```
+
+Output:
+
+```
+Employee object called
+```
+
+Without defining `__call__()`, we cannot call the object using `emp()`.
+
+### **Difference table**
+
+| `callable()`                         | `__call__()`                     |
+| ------------------------------------ | -------------------------------- |
+| Built-in function                    | Special method                   |
+| Checks whether an object is callable | Makes an object callable         |
+| Returns `True` or `False`            | Executes the defined behavior    |
+| `callable(obj)`                      | `obj()` invokes `obj.__call__()` |
+
+### **Interview-ready answer**
+
+“`callable()` is a built-in function that checks whether an object can be called. `__call__()` is a special method that allows an instance of a class to behave like a function. When we call an object using parentheses, Python invokes its `__call__()` method if it is defined.”
+
+**Memory trick:** `callable()` checks; `__call__()` makes it happen.
 ---
 
 ### Q63: What is *args with single asterisk?
@@ -2429,38 +2482,98 @@ func(**d)  # Same as func(x=10, y=20)
 
 Iteration protocol requires __iter__ and __next__.
 
-```python
-# Custom iterable
-class CountUp:
-    def __init__(self, max):
-        self.max = max
-    
-    def __iter__(self):
-        self.current = 0
-        return self
-    
-    def __next__(self):
-        if self.current < self.max:
-            self.current += 1
-            return self.current
-        else:
-            raise StopIteration
+## **What is Iteration and Iteration Protocol in Python?**
 
-# Use it
-counter = CountUp(3)
-for num in counter:
-    print(num)
-# 1
-# 2
-# 3
+Let's understand this with a simple example.
 
-# Or manually
-counter = CountUp(3)
-print(next(counter))  # 1
-print(next(counter))  # 2
-print(next(counter))  # 3
-# print(next(counter))  # ❌ StopIteration
+### **1. What is Iteration?**
+
+**Iteration means going through elements one by one**, usually using a loop.
+
+Example:
+
 ```
+numbers = [10, 20, 30]for num in numbers:    print(num)
+```
+
+Output:
+
+```
+10
+20
+30
+```
+
+Here, the `for` loop visits each element one by one. This process is called iteration.
+
+### **2. What is Iteration Protocol?**
+
+The **iteration protocol is a set of rules Python follows to iterate over an object.**
+
+It uses two special methods:
+
+| Method       | Purpose                                    |
+| ------------ | ------------------------------------------ |
+| `__iter__()` | Returns an iterator object                 |
+| `__next__()` | Returns the next element from the iterator |
+
+Let's understand with an example.
+
+```
+numbers = [10, 20, 30]iterator = iter(numbers)print(next(iterator))  # 10print(next(iterator))  # 20print(next(iterator))  # 30
+```
+
+Here:
+
+- `iter(numbers)` calls `numbers.__iter__()` and returns an iterator.
+- `next(iterator)` calls `iterator.__next__()` and returns the next value.
+- Once all elements are consumed, Python raises `StopIteration`.
+
+### **3. How does a&#x20;**`for`**&#x20;loop work internally?**
+
+This is an important interview question.
+
+When you write:
+
+```
+for num in numbers:    print(num)
+```
+
+Python internally performs something similar to:
+
+```
+iterator = iter(numbers)while True:    try:        num = next(iterator)        print(num)    except StopIteration:        break
+```
+
+So, a `for` loop automatically handles iteration and stops when `StopIteration` occurs.
+
+### **4. Iterable vs Iterator**
+
+This is another commonly asked interview question.
+
+| Iterable                            | Iterator                                  |
+| ----------------------------------- | ----------------------------------------- |
+| An object that can be iterated over | An object that produces values one by one |
+| Supports `__iter__()`               | Supports `__iter__()` and `__next__()`    |
+| Example: list, tuple, string        | Example: `iter(list)`                     |
+| Can create an iterator              | Provides the next value                   |
+
+Example:
+
+```
+numbers = [10, 20, 30]  # Iterableiterator = iter(numbers)  # Iteratorprint(next(iterator))  # 10
+```
+
+### **Interview-ready answer**
+
+"Iteration is the process of accessing elements one by one. Python follows an iteration protocol that uses two special methods: `__iter__()` and `__next__()`. The `__iter__()` method returns an iterator, while `__next__()` returns the next element. When no elements remain, it raises `StopIteration`. Python's for loop internally follows this protocol."
+
+**Memory trick:**
+
+- Iterable = Can I loop over it?
+- Iterator = Can I give you the next value?
+- `__iter__()` = Get iterator.
+- `__next__()` = Get next value.
 
 ---
 
@@ -2519,35 +2632,88 @@ print(len(Number(-5))) # 5
 
 Already covered in Q44, more examples:
 
-```python
-class Circle:
-    def __init__(self, radius):
-        self._radius = radius
-    
-    @property
-    def radius(self):
-        return self._radius
-    
-    @radius.setter
-    def radius(self, value):
-        if value <= 0:
-            raise ValueError("Radius must be positive")
-        self._radius = value
-    
-    @property
-    def area(self):
-        return 3.14159 * self._radius ** 2
+## **What is the&#x20;**`@property`**&#x20;decorator in Python?**
 
-c = Circle(5)
-print(c.radius)  # 5
-print(c.area)    # 78.53975
+### **1. Simple definition**
 
-c.radius = 10
-print(c.area)    # 314.159
+The `@property` decorator allows us to **access a class method like an attribute (variable), without using parentheses&#x20;**`()`**.**
 
-# c.radius = -5  # ❌ Error
+It is commonly used for encapsulation and controlled access to class attributes.
+
+### **2. Understand with an example**
+
+Suppose we have an Employee class with a salary attribute.
+
+**Without&#x20;**`@property`**:**
+
+```
+class Employee:    def get_salary(self):        return 50000emp = Employee()print(emp.get_salary())
 ```
 
+Output:
+
+```
+50000
+```
+
+Here, we need parentheses because `get_salary()` is a method.
+
+**With&#x20;**`@property`**:**
+
+```
+class Employee:    @property    def salary(self):        return 50000emp = Employee()print(emp.salary)
+```
+
+Output:
+
+```
+50000
+```
+
+Notice the difference:
+
+- Without property: `emp.get_salary()`
+- With property: `emp.salary`
+
+Although `salary` is a method internally, we access it like an attribute.
+
+### **3. Why do we use&#x20;**`@property`**?**
+
+One important use is **data validation and controlled access**.
+
+For example, suppose salary should never be negative.
+
+```
+class Employee:    def __init__(self, salary):        self._salary = salary    @property    def salary(self):        return self._salary    @salary.setter    def salary(self, value):        if value < 0:            raise ValueError("Salary cannot be negative")        self._salary = valueemp = Employee(50000)print(emp.salary)  # 50000emp.salary = 60000print(emp.salary)  # 60000
+```
+
+Here:
+
+- `@property` is used to **get** the salary.
+- `@salary.setter` is used to **update** the salary with validation.
+- `_salary` is an internal attribute by Python naming convention.
+
+If we try `emp.salary = -1000`, Python raises a `ValueError`.
+
+### **4. Important difference**
+
+| Decorator                | Purpose                                           |
+| ------------------------ | ------------------------------------------------- |
+| `@property`              | Gets a value like an attribute                    |
+| `@property_name.setter`  | Sets or updates a value with optional validation  |
+| `@property_name.deleter` | Defines what happens when an attribute is deleted |
+
+### **Interview-ready answer**
+
+"`@property` is a built-in Python decorator that allows us to access a method like an attribute without calling it using parentheses. It is mainly used for encapsulation, data validation, and controlled access to class attributes. We can use `@property` to get a value and `@name.setter` to update it with validation."
+
+**Memory trick:**
+
+- `@property` → Get
+- `@salary.setter` → Set
+- `@salary.deleter` → Delete
+
+**Interview tip:** `@property` is especially useful when you want to change the internal implementation of an attribute without changing how other parts of your code access it.
 ---
 
 ### Q68: What is slots?
@@ -2556,27 +2722,36 @@ print(c.area)    # 314.159
 
 Optimize memory by pre-defining attributes.
 
-```python
-# Without slots
-class PersonNormal:
-    def __init__(self, name, age):
-        self.name = name
-        self.age = age
+## **What are&#x20;**`__slots__`**&#x20;in Python?**
 
-# With slots
-class PersonSlots:
-    __slots__ = ['name', 'age']
-    
-    def __init__(self, name, age):
-        self.name = name
-        self.age = age
+`__slots__` is used to **restrict the attributes of an object and save memory**.
 
-p1 = PersonNormal("Alice", 25)
-p1.email = "alice@example.com"  # Can add any attribute
+### **Simple example**
 
-p2 = PersonSlots("Bob", 30)
-# p2.email = "bob@example.com"  # ❌ Error - not in slots
+**Without&#x20;**`__slots__`**:**
+
 ```
+class Employee:    passemp = Employee()emp.name = "Rahul"emp.age = 25  # Allowed
+```
+
+**With&#x20;**`__slots__`**:**
+
+```
+class Employee:    __slots__ = ['name']emp = Employee()emp.name = "Rahul"emp.age = 25  # Error!
+```
+
+Here, only `name` is allowed. We cannot add `age`.
+
+### **Why use it?**
+
+1. Saves memory when creating many objects.
+2. Restricts objects to predefined attributes.
+
+### **Interview answer**
+
+"`__slots__` is a special class variable used to restrict object attributes and reduce memory usage by avoiding the instance `__dict__` by default."
+
+**Remember:** Normal class = Flexible attributes. `__slots__` = Fixed attributes + potential memory savings.
 
 ---
 
