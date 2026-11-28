@@ -1270,6 +1270,78 @@ Most fine-tuning frameworks (Axolotl, LLaMA-Factory) accept all three formats.
 | **Max sequence length** | 512–4096                                | Longer = more context but more memory                       |
 | **Warmup steps**        | 10–100                                  | Prevents early divergence                                   |
 
+In detail all - 
+## **What hyperparameters matter during fine-tuning?**
+
+Hyperparameters are settings we choose before or during training to control how the model learns.
+
+For interview preparation, remember these **15 important fine-tuning hyperparameters**.
+
+### **1. Core training hyperparameters**
+
+| **Hyperparameter**              | **Typical Values**                                   | **Notes**                                                                                          |
+| ------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Learning rate**               | 1e-4 to 3e-4 (LoRA); 1e-5 to 5e-5 (full fine-tuning) | Most critical; too high → unstable training; too low → slow learning or no meaningful improvement  |
+| **Epochs**                      | 1–5                                                  | Number of times the model sees the entire training dataset; too many → overfitting                 |
+| **Batch size**                  | 1–8 (LLM fine-tuning, GPU-dependent)                 | Number of samples processed together; larger batch → more GPU memory required                      |
+| **Gradient accumulation steps** | 4–16                                                 | Accumulates gradients over multiple batches before updating weights; helps simulate a larger batch |
+| **Effective batch size**        | Batch size × accumulation steps × number of GPUs     | Total samples contributing to one optimizer update                                                 |
+| **Optimizer**                   | AdamW                                                | Common optimizer for LLM fine-tuning; updates model weights using gradients                        |
+| **Weight decay**                | 0.0–0.1                                              | Regularization to reduce overfitting; commonly 0.01                                                |
+| **Warmup steps / ratio**        | 3–10% of total steps                                 | Gradually increases learning rate at the beginning to stabilize training                           |
+| **LR scheduler**                | Cosine, linear, constant                             | Controls how learning rate changes during training; cosine and linear are commonly used            |
+| **Max gradient norm**           | 0.3–1.0                                              | Gradient clipping; prevents extremely large gradients and unstable updates                         |
+
+### **2. Data and sequence hyperparameters**
+
+| **Hyperparameter**         | **Typical Values**     | **Notes**                                                                                     |
+| -------------------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
+| **Max sequence length**    | 512, 1024, 2048, 4096+ | Maximum tokens per training example; longer sequences require more memory                     |
+| **Max training samples**   | Depends on dataset     | Number of examples used for training; more data can improve generalization if quality is good |
+| **Train-validation split** | 90:10 or 80:20         | Training data teaches the model; validation data checks performance on unseen examples        |
+| **Data shuffle**           | True                   | Randomizes training examples to reduce order-related learning issues                          |
+| **Packing**                | True / False           | Combines multiple short examples into one sequence to improve GPU utilization                 |
+
+### **3. LoRA / QLoRA-specific hyperparameters**
+
+| **Hyperparameter**      | **Typical Values**                                                      | **Notes**                                                                                  |
+| ----------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **LoRA rank (r)**       | 8, 16, 32, 64                                                           | Controls the capacity of LoRA adapters; higher rank → more trainable parameters and memory |
+| **LoRA alpha**          | 16, 32, 64                                                              | Scaling factor for LoRA updates; effective scaling is commonly alpha/r                     |
+| **LoRA dropout**        | 0.0–0.1                                                                 | Randomly drops adapter activations during training; helps reduce overfitting               |
+| **Target modules**      | q_proj, v_proj; sometimes k_proj, o_proj, up_proj, down_proj, gate_proj | Defines which model layers receive LoRA adapters; more modules → more trainable parameters |
+| **Quantization bits**   | 4-bit (QLoRA), 8-bit                                                    | Reduces model memory; QLoRA commonly uses 4-bit quantization                               |
+| **Quantization type**   | NF4                                                                     | Common 4-bit format in QLoRA; designed for normally distributed model weights              |
+| **Double quantization** | True / False                                                            | Quantizes quantization constants too, saving additional memory                             |
+
+### **4. Most important hyperparameters to remember for interviews**
+
+| **Hyperparameter**    | **Why it matters**                                          |
+| --------------------- | ----------------------------------------------------------- |
+| Learning rate         | Controls how much weights change                            |
+| Epochs                | Controls how many times the model learns from the dataset   |
+| Batch size            | Controls how many samples are processed together            |
+| Max sequence length   | Controls how much text the model can process in one example |
+| LoRA rank             | Controls adapter capacity                                   |
+| LoRA alpha            | Controls adapter update scaling                             |
+| LoRA dropout          | Helps prevent adapter overfitting                           |
+| Warmup                | Stabilizes early training                                   |
+| Weight decay          | Helps reduce overfitting                                    |
+| Gradient accumulation | Allows larger effective batch sizes with limited GPU memory |
+
+**Memory trick for interview:**
+
+**L-E-B-S-R-A-D**
+
+- **L** – Learning rate
+- **E** – Epochs
+- **B** – Batch size
+- **S** – Sequence length
+- **R** – LoRA rank
+- **A** – LoRA alpha
+- **D** – Dropout
+
+These are the main hyperparameters you should confidently explain during an LLM fine-tuning interview. Typical values are starting points, not fixed rules; they depend on the model, dataset, GPU memory, and training objective.
 ---
 
 # 10. PyTorch
