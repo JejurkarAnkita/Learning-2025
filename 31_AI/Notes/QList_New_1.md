@@ -1623,9 +1623,71 @@ RLHF transforms "predict the next token" into "generate responses humans prefer.
 
 **PPO (Proximal Policy Optimization)** is the RL algorithm used in the third stage of RLHF.
 
-It optimizes the LLM (the policy) to maximize reward while staying "close" to the original SFT model (via a KL divergence penalty). This prevents the model from exploiting the reward model (reward hacking) by staying too far from its original behavior.
+## **What is PPO in the context of RLHF?**
+
+**PPO (Proximal Policy Optimization)** is a reinforcement learning algorithm used to train a model to generate better responses based on rewards.
+
+In RLHF, PPO helps improve an LLM using human preferences.
+
+### **Simple flow**
+
+1. The LLM generates a response.
+2. A Reward Model gives the response a score based on human preferences.
+3. PPO updates the LLM to generate responses with higher rewards.
+4. It prevents the model from changing too drastically during training.
+
+### **Example**
+
+Question: "Explain AI in simple words."
+
+- Response A: Easy to understand → Reward = 8
+- Response B: Too technical → Reward = 3
+
+PPO trains the LLM to produce responses more like Response A.
+
+### **Why do we use PPO?**
+
+| **Concept** | **Simple Explanation**                                      |
+| ----------- | ----------------------------------------------------------- |
+| Reward      | Score given to the model's response                         |
+| Policy      | The LLM's response-generation behavior                      |
+| PPO         | Updates the policy to improve rewards                       |
+| Clipping    | Prevents the model from making very large updates           |
+| KL penalty  | Helps keep the fine-tuned model close to the original model |
+
+### **Interview-ready answer**
+
+"PPO stands for Proximal Policy Optimization. It is a reinforcement learning algorithm commonly used in RLHF to fine-tune an LLM using feedback from a reward model. PPO improves the model's responses based on reward scores while restricting large policy updates, helping maintain training stability."
+
+**Memory trick:** PPO = Improve the response, but don't change the model too drastically.
 
 **Why PPO:** Stable, sample-efficient, well-understood. Alternative: DPO (Direct Preference Optimization) skips the RL step entirely and is simpler.
+---
+
+## **What is DPO?**
+
+**DPO (Direct Preference Optimization)** is a technique used to fine-tune LLMs using human preference data, without requiring a separate Reward Model or PPO training loop.
+
+### **Simple example**
+
+For the same question, we have two responses:
+
+- **Preferred response:** Clear and helpful
+- **Rejected response:** Confusing or incorrect
+
+DPO directly trains the LLM to prefer the better response over the rejected one.
+
+### **DPO vs PPO**
+
+| PPO                             | DPO                                  |
+| ------------------------------- | ------------------------------------ |
+| Uses a separate Reward Model    | Uses preference pairs directly       |
+| Requires reinforcement learning | Direct preference-based optimization |
+| More complex training           | Simpler training                     |
+
+**Interview answer:** "DPO stands for Direct Preference Optimization. It fine-tunes an LLM using preferred and rejected response pairs, directly aligning the model with human preferences without needing a separate reward model or PPO loop."
+
+**Memory trick:** PPO = Learn using rewards. DPO = Learn by comparing better vs worse responses.
 
 ---
 
