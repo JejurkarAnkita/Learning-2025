@@ -1408,6 +1408,16 @@ class MyDataset(Dataset):
 
 loader = DataLoader(MyDataset(), batch_size=32, shuffle=True, num_workers=4)
 ```
+1. Dataset
+A Dataset stores your training data and tells PyTorch how to access each sample.
+
+In simple words: Dataset = Your data + how to get one sample.
+
+Example: 1,000 text questions and their answers.
+2. DataLoader
+A DataLoader takes data from the Dataset and provides it to the model in batches.
+
+In simple words: DataLoader = Takes data and serves it batch by batch.
 
 ---
 
